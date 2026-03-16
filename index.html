@@ -830,9 +830,12 @@ function dismissBanner(){
 /* ════ SERVICE WORKER REGISTRATION ════ */
 if('serviceWorker' in navigator){
   window.addEventListener('load', ()=>{
-    navigator.serviceWorker.register('/sw.js')
-      .then(r=>console.log('SW registered:', r.scope))
-      .catch(e=>console.log('SW error:', e));
+    /* Dùng relative path để hoạt động đúng trên GitHub Pages /tkb/ */
+    const swUrl = new URL('sw.js', window.location.href).href;
+    const scope = new URL('./', window.location.href).href;
+    navigator.serviceWorker.register(swUrl, { scope })
+      .then(r => console.log('SW registered:', r.scope))
+      .catch(e => console.log('SW error:', e));
   });
 }
 </script>

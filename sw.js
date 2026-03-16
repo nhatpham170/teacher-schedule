@@ -2,31 +2,20 @@
    TKB Service Worker — Cache-first strategy
    Tăng version CACHE_NAME mỗi khi deploy mới
    ═══════════════════════════════════════════ */
-const CACHE_NAME = 'tkb-v1';
+const CACHE_NAME = 'tkb-v2';
 
-/* Tất cả file cần cache khi cài app */
-const PRECACHE_URLS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png',
-  /* Font từ Google — cache khi lần đầu load */
-  'https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap',
-];
-
-/* ── Install: pre-cache core files ── */
+/* ── Install: pre-cache core files dùng relative URL ── */
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
-      /* Cache local files bắt buộc, font optional */
-      return cache.addAll([
-        '/',
-        '/index.html',
-        '/manifest.json',
-        '/icon-192.png',
-        '/icon-512.png',
-      ]).catch(() => {});
+      /* Dùng relative path — hoạt động đúng dù deploy ở /tkb/ hay / */
+      return Promise.allSettled([
+        cache.add('./'),
+        cache.add('./index.html'),
+        cache.add('./manifest.json'),
+        cache.add('./icon-192.png'),
+        cache.add('./icon-512.png'),
+      ]);
     })
   );
   self.skipWaiting();
@@ -36,9 +25,7 @@ self.addEventListener('install', event => {
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(
-        keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
-      )
+      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
     )
   );
   self.clients.claim();
@@ -46,7 +33,6 @@ self.addEventListener('activate', event => {
 
 /* ── Fetch: Cache-first, network fallback ── */
 self.addEventListener('fetch', event => {
-  /* Chỉ xử lý GET */
   if (event.request.method !== 'GET') return;
 
   const url = new URL(event.request.url);
@@ -75,7 +61,10 @@ self.addEventListener('fetch', event => {
         if (!res || res.status !== 200 || res.type === 'opaque') return res;
         caches.open(CACHE_NAME).then(cache => cache.put(event.request, res.clone()));
         return res;
-      }).catch(() => caches.match('/index.html'));
+      }).catch(() => {
+        /* Offline fallback: trả về index.html */
+        return caches.match('./index.html');
+      });
     })
   );
 });
