@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>TKB – Thời Khóa Biểu</title>
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TKB">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1E293B">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --k10:#3B82F6;--k10-bg:#DBEAFE;--k10-bd:#93C5FD;--k10-t:#1D4ED8;
+  --k11:#EF4444;--k11-bg:#FEE2E2;--k11-bd:#FCA5A5;--k11-t:#B91C1C;
+  --k12:#F59E0B;--k12-bg:#FEF3C7;--k12-bd:#FCD34D;--k12-t:#92400E;
+  --ng-bg:#F0FDF4;--ng-bd:#BBF7D0;--ng-t:#166534;
+  --bg:#F1F5F9;--sur:#fff;--bdr:#E2E8F0;
+  --txt:#0F172A;--mut:#64748B;--dark:#1E293B;--blue:#2563EB;
+}
+body{font-family:'Be Vietnam Pro',sans-serif;background:var(--bg);color:var(--txt);-webkit-font-smoothing:antialiased}
+
+/* ══ STICKY SHELL ══ */
+#sticky-shell{position:sticky;top:0;z-index:200;background:var(--dark);box-shadow:0 2px 16px rgba(0,0,0,.3)}
+
+/* ══ HEADER ══ */
+#app-header{overflow:hidden;transition:max-height .3s ease,opacity .3s ease,padding .3s ease}
+#app-header.expanded{max-height:130px;opacity:1;padding:12px 14px 8px}
+#app-header.collapsed{max-height:0;opacity:0;padding:0 14px}
+.header-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px}
+.school-name{font-size:15px;font-weight:800;color:#F8FAFC;line-height:1.2}
+.today-pill{display:inline-flex;align-items:center;gap:5px;background:var(--blue);color:#fff;font-size:11px;font-weight:700;border-radius:20px;padding:5px 11px;white-space:nowrap;flex-shrink:0;box-shadow:0 2px 8px rgba(37,99,235,.4)}
+.dot-live{width:6px;height:6px;border-radius:50%;background:#86EFAC;flex-shrink:0;animation:blink 1.2s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.header-meta{display:flex;gap:5px;flex-wrap:wrap}
+.meta-chip{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);border-radius:7px;padding:4px 9px;font-size:10px;color:#CBD5E1}
+.meta-chip strong{color:#F1F5F9;font-weight:700}
+
+/* ══ MINIBAR ══ */
+#minibar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 12px;border-bottom:1px solid rgba(255,255,255,.07)}
+#minibar.hide{display:none}
+.mini-today{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:#93C5FD}
+
+/* ══ TOP ACTIONS BAR ══ */
+#top-actions{display:flex;align-items:center;justify-content:space-between;padding:0 12px 6px;gap:8px}
+#top-actions.hide{display:none}
+/* refresh info left side */
+.refresh-info{display:flex;align-items:center;gap:6px;font-size:10px;color:#64748B}
+.refresh-dot{width:6px;height:6px;border-radius:50%;background:#4ADE80;flex-shrink:0}
+.refresh-dot.spinning{animation:spin-dot .6s linear infinite}
+@keyframes spin-dot{0%{opacity:1}50%{opacity:.2}100%{opacity:1}}
+.act-btns{display:flex;gap:6px}
+.toggle-btn,.settings-btn,.refresh-btn{display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:7px;padding:4px 9px;cursor:pointer;font-family:inherit;font-size:10px;font-weight:700;color:#94A3B8;transition:all .18s;white-space:nowrap}
+.toggle-btn:hover,.settings-btn:hover,.refresh-btn:hover{background:rgba(255,255,255,.18);color:#fff}
+.refresh-btn svg{transition:transform .5s ease}
+.refresh-btn.spinning svg{animation:spin .6s linear}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+
+/* ══ DAY TABS ══ */
+#day-tabs-wrap{padding:6px 10px 8px}
+.day-tabs{display:flex;gap:3px;overflow-x:auto;scrollbar-width:none}
+.day-tabs::-webkit-scrollbar{display:none}
+.day-tab{flex:1;min-width:48px;display:flex;flex-direction:column;align-items:center;gap:1px;padding:5px 4px;border-radius:9px;cursor:pointer;border:1.5px solid transparent;background:transparent;color:#64748B;font-family:inherit;transition:all .18s}
+.tab-short{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
+.tab-date{font-size:16px;font-weight:800;line-height:1}
+.day-tab.is-today:not(.active){color:#93C5FD;border-color:rgba(147,197,253,.3)}
+.day-tab.active{background:var(--blue);color:#fff;box-shadow:0 3px 10px rgba(37,99,235,.4)}
+
+/* ══ MAIN ══ */
+.main{padding:8px 10px 80px}
+.legend{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px}
+.legend-item{display:flex;align-items:center;gap:5px;background:var(--sur);border:1px solid var(--bdr);border-radius:7px;padding:4px 9px;font-size:10px;font-weight:600;color:var(--mut)}
+.ldot{width:8px;height:8px;border-radius:2px}
+.ldot-k10{background:var(--k10)}.ldot-k11{background:var(--k11)}.ldot-k12{background:var(--k12)}
+.ldot-ng{background:#86EFAC;border:1.5px solid #4ADE80}
+
+/* ══ MOBILE CARDS — Timeline layout ══ */
+.day-view{display:none}
+.day-view.visible{display:block;animation:fadeUp .2s ease both}
+.session-lbl{display:flex;align-items:center;gap:7px;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--mut);margin:12px 0 2px 32px}
+.session-lbl::after{content:'';flex:1;height:1px;background:var(--bdr)}
+
+/* Timeline container */
+.timeline{position:relative}
+.timeline::before{content:'';position:absolute;left:15px;top:0;bottom:0;width:2px;background:var(--bdr);z-index:0}
+
+/* Each timeline row */
+.tl-row{display:flex;align-items:center;gap:0;position:relative;margin-bottom:0}
+
+/* Dot column */
+.tl-dot-col{width:32px;flex-shrink:0;display:flex;align-items:center;justify-content:center;z-index:1;align-self:stretch;padding:3px 0}
+.tl-dot{width:11px;height:11px;border-radius:50%;background:#E2E8F0;border:2px solid #CBD5E1;flex-shrink:0;transition:all .3s}
+.tl-row.is-past .tl-dot{background:#94A3B8;border-color:#64748B}
+.tl-row.is-current .tl-dot{width:14px;height:14px;background:var(--blue);border-color:var(--blue);animation:dotPulse 1.5s ease-in-out infinite}
+.tl-row.is-next .tl-dot{background:#fff;border-color:#F59E0B;border-width:2.5px}
+@keyframes dotPulse{0%,100%{box-shadow:0 0 0 3px rgba(37,99,235,.25)}50%{box-shadow:0 0 0 7px rgba(37,99,235,.07)}}
+
+/* Card */
+.tl-card{flex:1;min-width:0;background:var(--sur);border:1px solid var(--bdr);border-radius:9px;margin:3px 0;padding:6px 10px;display:flex;align-items:center;justify-content:space-between;gap:8px;position:relative;overflow:hidden;transition:all .2s}
+.tl-row.is-current .tl-card{border-color:var(--blue);box-shadow:0 0 0 2px rgba(37,99,235,.12),0 3px 12px rgba(37,99,235,.08)}
+.tl-row.is-current .tl-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--blue)}
+.tl-row.is-next .tl-card{border-color:#F59E0B;box-shadow:0 0 0 1.5px rgba(245,158,11,.12)}
+.tl-row.is-next .tl-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:#F59E0B}
+.tl-row.is-past .tl-card{opacity:.4}
+.tl-row.is-off .tl-card{background:#F8FAFC;opacity:.5}
+
+.tl-left{display:flex;align-items:center;gap:7px}
+.tl-num{font-size:13px;font-weight:800;min-width:14px;text-align:center;color:var(--mut)}
+.tl-row.is-current .tl-num{color:var(--blue)}
+.tl-row.is-next .tl-num{color:#D97706}
+.tl-time{font-size:10px;font-weight:500;color:var(--mut);white-space:nowrap}
+.tl-right{display:flex;align-items:center;gap:5px;flex-shrink:0}
+.nghỉ-lbl{font-size:11px;font-weight:600;color:#94A3B8}
+
+.chip{display:inline-flex;align-items:center;justify-content:center;border-radius:6px;padding:3px 9px;font-size:11px;font-weight:700;border:1.5px solid transparent;white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis}
+.chip-k10{background:var(--k10-bg);color:var(--k10-t);border-color:var(--k10-bd)}
+.chip-k11{background:var(--k11-bg);color:var(--k11-t);border-color:var(--k11-bd)}
+.chip-k12{background:var(--k12-bg);color:var(--k12-t);border-color:var(--k12-bd)}
+.chip-ng{background:var(--ng-bg);color:var(--ng-t);border-color:var(--ng-bd);font-size:10px}
+.chip-em{background:#F8FAFC;color:#CBD5E1;border-color:#F1F5F9;font-size:10px}
+.now-badge{display:inline-flex;align-items:center;gap:3px;background:var(--blue);color:#fff;font-size:8px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;border-radius:5px;padding:2px 6px}
+.now-badge .dot-live{width:4px;height:4px}
+.next-badge{display:inline-flex;align-items:center;gap:3px;background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;font-size:8px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;border-radius:5px;padding:2px 6px}
+
+
+/* ══ DESKTOP TABLE ══ */
+.desktop-wrap{display:none;background:var(--sur);border-radius:20px;border:1px solid var(--bdr);overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.06)}
+table{width:100%;border-collapse:collapse}
+thead th{background:var(--dark);color:#CBD5E1;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:14px 10px;text-align:center;white-space:nowrap}
+thead th:nth-child(1),thead th:nth-child(2){text-align:left;padding-left:20px}
+th.t-today{color:#fff!important;background:var(--blue)!important}
+th.t-today .t-badge{display:inline-block;background:rgba(255,255,255,.25);color:#fff;font-size:8px;font-weight:700;border-radius:4px;padding:1px 5px;margin-left:5px;vertical-align:middle}
+tbody tr{border-bottom:1px solid #F1F5F9;transition:background .12s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:#F8FAFC}
+td{padding:10px;text-align:center;font-size:12px;vertical-align:middle}
+td:nth-child(1),td:nth-child(2){text-align:left;padding-left:20px}
+.td-t{font-weight:800;font-size:15px;width:40px}
+.td-tm{font-size:11px;font-weight:500;color:var(--mut);white-space:nowrap}
+td.t-today{background:#EFF6FF;position:relative}
+td.t-today::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--blue)}
+tr.cur-row td.t-today{background:#DBEAFE!important}
+tr.next-row{background:#FFFBEB!important}
+tr.cur-row td.t-today .chip{animation:pulse 1.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 3px rgba(59,130,246,.3)}50%{box-shadow:0 0 0 6px rgba(59,130,246,.08)}}
+.ng-trua td{background:#F8FAFC;padding:8px 20px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#94A3B8;border-top:1px solid var(--bdr);border-bottom:1px solid var(--bdr)}
+
+/* ══ SETTINGS DRAWER ══ */
+#settings-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;backdrop-filter:blur(2px)}
+#settings-overlay.open{display:block}
+#settings-drawer{
+  position:fixed;bottom:0;left:0;right:0;z-index:501;
+  background:#fff;border-radius:20px 20px 0 0;
+  max-height:92vh;overflow-y:auto;
+  /* NO touch-action swipe — handled by JS */
+  transform:translateY(100%);transition:transform .3s cubic-bezier(.32,0,.67,0);
+  padding-bottom:env(safe-area-inset-bottom);
+  overscroll-behavior:contain;
+}
+#settings-drawer.open{transform:translateY(0)}
+/* handle purely cosmetic, no swipe */
+.drawer-handle{width:36px;height:4px;background:#CBD5E1;border-radius:4px;margin:12px auto 0;cursor:default}
+.drawer-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 10px}
+.drawer-title{font-size:16px;font-weight:800;color:var(--txt)}
+.drawer-close{width:30px;height:30px;border-radius:50%;background:#F1F5F9;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--mut);font-size:18px;line-height:1}
+.drawer-close:hover{background:#E2E8F0}
+.drawer-body{padding:0 16px 24px}
+.s-section{margin-bottom:20px}
+.s-title{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--mut);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.s-title::after{content:'';flex:1;height:1px;background:var(--bdr)}
+.s-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.s-label{font-size:12px;font-weight:600;color:var(--mut);flex-shrink:0;width:90px}
+.s-input{flex:1;border:1.5px solid var(--bdr);border-radius:8px;padding:7px 10px;font-family:inherit;font-size:13px;font-weight:600;color:var(--txt);background:#fff;outline:none;transition:border .15s}
+.s-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.s-input[type=time]{font-size:13px;cursor:pointer}
+.s-input[type=number]{width:70px;flex:none;text-align:center}
+.sched-days{display:flex;gap:4px;margin-bottom:8px}
+.sched-day-btn{flex:1;padding:6px 2px;border-radius:8px;border:1.5px solid var(--bdr);background:#F8FAFC;font-family:inherit;font-size:10px;font-weight:700;color:var(--mut);cursor:pointer;transition:all .15s;text-align:center}
+.sched-day-btn.active-day{background:var(--blue);border-color:var(--blue);color:#fff}
+.sched-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+.sched-cell{display:flex;align-items:center;gap:6px;background:#F8FAFC;border:1.5px solid var(--bdr);border-radius:8px;padding:6px 8px}
+.sched-cell-num{font-size:11px;font-weight:800;color:var(--mut);min-width:20px;text-align:center}
+.sched-cell-input{flex:1;border:none;background:transparent;font-family:inherit;font-size:12px;font-weight:700;color:var(--txt);outline:none;min-width:0}
+.sched-cell-input::placeholder{color:#CBD5E1;font-weight:400}
+.sched-cell:focus-within{border-color:var(--blue);background:#EFF6FF}
+.save-btn{width:100%;padding:13px;background:var(--blue);color:#fff;border:none;border-radius:12px;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;margin-top:8px;transition:all .18s;box-shadow:0 4px 12px rgba(37,99,235,.3)}
+.save-btn:hover{background:#1D4ED8}
+.save-btn:active{transform:scale(.98)}
+
+/* ══ TOAST ══ */
+.saved-toast{display:none;position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#0F172A;color:#fff;font-size:12px;font-weight:700;padding:8px 18px;border-radius:20px;z-index:700;white-space:nowrap;pointer-events:none}
+.saved-toast.show{display:block;animation:toastAnim .3s ease both}
+@keyframes toastAnim{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ══ RESPONSIVE ══ */
+@media(max-width:640px){.desktop-wrap{display:none!important}}
+@media(min-width:641px){
+  body{padding:28px 24px 40px}
+  #sticky-shell{position:static;box-shadow:none;border-radius:20px;margin-bottom:20px}
+  #app-header.expanded,#app-header.collapsed{max-height:none!important;opacity:1!important;padding:22px 26px 14px!important}
+  #minibar{display:none!important}
+  #top-actions{display:none!important}
+  .school-name{font-size:20px}
+  #day-tabs-wrap{display:none}
+  .day-view{display:none!important}
+  .desktop-wrap{display:block}
+  .main{padding:0}
+  .legend{margin-bottom:16px}
+  #settings-drawer{max-width:480px;left:50%;transform:translateX(-50%) translateY(100%);border-radius:20px;bottom:40px}
+  #settings-drawer.open{transform:translateX(-50%) translateY(0)}
+}
+</style>
+</head>
+<body>
+
+<!-- ══ STICKY SHELL ══ -->
+<div id="sticky-shell">
+  <div id="app-header" class="expanded">
+    <div class="header-top">
+      <div><div class="school-name" id="disp-school">THPT Quang Trung</div></div>
+      <div class="today-pill"><span class="dot-live"></span><span id="today-label">Hôm nay</span><span id="live-clock" style="margin-left:6px;font-variant-numeric:tabular-nums;opacity:.85">00:00:00</span></div>
+    </div>
+    <div class="header-meta">
+      <div class="meta-chip">GV: <strong id="disp-gv">Bùi Linh Hạnh</strong></div>
+      <div class="meta-chip">Môn: <strong id="disp-mon">Kinh Tế &amp; Pháp Luật</strong></div>
+      <div class="meta-chip">NHK: <strong id="disp-nam">2026</strong></div>
+    </div>
+  </div>
+
+  <!-- Minibar when header hidden -->
+  <div id="minibar" class="hide">
+    <div class="mini-today"><span class="dot-live"></span><span id="mini-label">–</span><span id="mini-clock" style="margin-left:8px;font-variant-numeric:tabular-nums;font-size:12px;font-weight:800;color:#F1F5F9;letter-spacing:.5px">00:00:00</span></div>
+    <div style="display:flex;gap:6px;align-items:center">
+      <span id="mini-refresh-time" style="display:none"></span>
+      <button class="refresh-btn" id="refresh-btn-mini" onclick="manualRefresh()">
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M13.5 8A5.5 5.5 0 1 1 8 2.5c1.8 0 3.4.87 4.4 2.2M13.5 2.5v3h-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button class="toggle-btn" onclick="openSettings()">
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="2.5" stroke="currentColor" stroke-width="1.6"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Cài đặt
+      </button>
+      <button class="toggle-btn" onclick="toggleHeader()">
+        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 4.5L6 8.5L10 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Hiện
+      </button>
+    </div>
+  </div>
+
+  <!-- Top actions when header shown -->
+  <div id="top-actions">
+    <!-- left: last refreshed -->
+    <div class="refresh-info">
+      <span class="refresh-dot" id="refresh-dot"></span>
+      <span id="refresh-time">–</span>
+    </div>
+    <div class="act-btns">
+      <button class="refresh-btn" id="refresh-btn-main" onclick="manualRefresh()">
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M13.5 8A5.5 5.5 0 1 1 8 2.5c1.8 0 3.4.87 4.4 2.2M13.5 2.5v3h-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Làm mới
+      </button>
+      <button class="settings-btn" onclick="openSettings()">
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="2.5" stroke="currentColor" stroke-width="1.6"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Cài đặt
+      </button>
+      <button class="toggle-btn" onclick="toggleHeader()">
+        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 8L6 4L10 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Ẩn
+      </button>
+    </div>
+  </div>
+
+  <div id="day-tabs-wrap">
+    <div class="day-tabs">
+      <button class="day-tab" data-day="1" onclick="selectDay(1)"><span class="tab-short">T2</span><span class="tab-date" id="d1">–</span></button>
+      <button class="day-tab" data-day="2" onclick="selectDay(2)"><span class="tab-short">T3</span><span class="tab-date" id="d2">–</span></button>
+      <button class="day-tab" data-day="3" onclick="selectDay(3)"><span class="tab-short">T4</span><span class="tab-date" id="d3">–</span></button>
+      <button class="day-tab" data-day="4" onclick="selectDay(4)"><span class="tab-short">T5</span><span class="tab-date" id="d4">–</span></button>
+      <button class="day-tab" data-day="5" onclick="selectDay(5)"><span class="tab-short">T6</span><span class="tab-date" id="d5">–</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MAIN ══ -->
+<main class="main">
+  <div class="legend">
+    <div class="legend-item"><span class="ldot ldot-k10"></span>K10</div>
+    <div class="legend-item"><span class="ldot ldot-k11"></span>K11</div>
+    <div class="legend-item"><span class="ldot ldot-k12"></span>K12</div>
+    <div class="legend-item"><span class="ldot ldot-ng"></span>Nghỉ</div>
+  </div>
+  <div id="mobile-root"></div>
+  <div class="desktop-wrap">
+    <table><thead><tr>
+      <th>Tiết</th><th>Thời gian</th>
+      <th id="th1">Thứ 2</th><th id="th2">Thứ 3</th><th id="th3">Thứ 4</th><th id="th4">Thứ 5</th><th id="th5">Thứ 6</th>
+    </tr></thead><tbody id="tbody"></tbody></table>
+  </div>
+</main>
+
+<!-- ══ SETTINGS DRAWER ══ -->
+<div id="settings-overlay" onclick="closeSettings()"></div>
+<div id="settings-drawer">
+  <div class="drawer-handle"></div>
+  <div class="drawer-header">
+    <div class="drawer-title">⚙️ Cài đặt</div>
+    <button class="drawer-close" onclick="closeSettings()">×</button>
+  </div>
+  <div class="drawer-body">
+    <div class="s-section">
+      <div class="s-title">🏫 Thông tin</div>
+      <div class="s-row"><span class="s-label">Tên trường</span><input class="s-input" id="cfg-school" type="text" placeholder="Tên trường..."></div>
+      <div class="s-row"><span class="s-label">Giáo viên</span><input class="s-input" id="cfg-gv" type="text" placeholder="Họ tên GV..."></div>
+      <div class="s-row"><span class="s-label">Bộ môn</span><input class="s-input" id="cfg-mon" type="text" placeholder="Môn học..."></div>
+      <div class="s-row"><span class="s-label">Năm học</span><input class="s-input" id="cfg-nam" type="text" placeholder="2026..."></div>
+    </div>
+    <div class="s-section">
+      <div class="s-title">⏰ Giờ học</div>
+      <div class="s-row"><span class="s-label">Sáng bắt đầu</span><input class="s-input" id="cfg-sang" type="time" value="07:00"></div>
+      <div class="s-row"><span class="s-label">Chiều bắt đầu</span><input class="s-input" id="cfg-chieu" type="time" value="13:30"></div>
+      <div class="s-row"><span class="s-label">Mỗi tiết</span><input class="s-input" id="cfg-tiet-len" type="number" min="30" max="90" value="45" style="width:70px;flex:none"> <span style="font-size:12px;color:var(--mut)">phút</span></div>
+      <div class="s-row"><span class="s-label">Nghỉ giữa tiết</span><input class="s-input" id="cfg-break" type="number" min="0" max="30" value="5" style="width:70px;flex:none"> <span style="font-size:12px;color:var(--mut)">phút</span></div>
+    </div>
+    <div class="s-section">
+      <div class="s-title">📋 Thời khóa biểu</div>
+      <div class="sched-days" id="sched-days">
+        <button class="sched-day-btn active-day" data-d="0" onclick="switchSchedDay(0)">T2</button>
+        <button class="sched-day-btn" data-d="1" onclick="switchSchedDay(1)">T3</button>
+        <button class="sched-day-btn" data-d="2" onclick="switchSchedDay(2)">T4</button>
+        <button class="sched-day-btn" data-d="3" onclick="switchSchedDay(3)">T5</button>
+        <button class="sched-day-btn" data-d="4" onclick="switchSchedDay(4)">T6</button>
+      </div>
+      <div class="sched-grid" id="sched-grid"></div>
+    </div>
+    <button class="save-btn" onclick="saveAll()">💾 Lưu tất cả</button>
+  </div>
+</div>
+<div class="saved-toast" id="saved-toast">✓ Đã lưu</div>
+
+<script>
+/* ════ DEFAULTS ════ */
+const DEF={
+  school:'THPT Quang Trung',gv:'Bùi Linh Hạnh',mon:'Kinh Tế & Pháp Luật',nam:'2026',
+  sang:'07:15',chieu:'13:00',tietLen:45,breakMin:5,
+  sched:{
+    // [T2, T3, T4, T5, T6]
+    1:['NGHỈ','NGHỈ',        '12D2-GDKTPL','12D2-GDKTPL','NGHỈ'],
+    2:['NGHỈ','NGHỈ',        '12D3-GDKTPL','NGHỈ',       'NGHỈ'],
+    3:['NGHỈ','12D3-GDKTPL', '12D4-GDKTPL','12D1-GDKTPL','NGHỈ'],
+    4:['NGHỈ','12D1-GDKTPL', 'NGHỈ',       '12D2-GDKTPL','NGHỈ'],
+    5:['NGHỈ','NGHỈ',        'NGHỈ',       'NGHỈ',       'NGHỈ'],
+    6:['NGHỈ','NGHỈ',        'NGHỈ',       '10D5',       'NGHỈ'],
+    7:['12A1-HĐTN','10D1-GDKTPL','NGHỈ',   '12A2-HĐTN',  'NGHỈ'],
+    8:['12A1-HĐTN','10D5-GDKTPL','NGHỈ',   '12A2-HDTN',  'NGHỈ'],
+    9:['NGHỈ','10D1-GDKTPL', 'NGHỈ',       'NGHỈ',       'NGHỈ'],
+   10:['NGHỈ','NGHỈ',        'NGHỈ',       'NGHỈ',       'NGHỈ'],
+  },
+  headerHidden:false
+};
+
+/* ════ STORAGE — IndexedDB với fallback localStorage ════
+   iOS PWA standalone dùng chung IndexedDB, localStorage bị isolate.
+   Ta dùng IDB làm primary, ls làm fallback khi IDB chưa sẵn sàng.   */
+const DB_NAME='tkb_db', DB_VER=1, STORE='cfg';
+let _db=null;
+
+function openDB(){
+  return new Promise((res,rej)=>{
+    if(_db){res(_db);return;}
+    const req=indexedDB.open(DB_NAME,DB_VER);
+    req.onupgradeneeded=e=>{
+      const db=e.target.result;
+      if(!db.objectStoreNames.contains(STORE))db.createObjectStore(STORE);
+    };
+    req.onsuccess=e=>{_db=e.target.result;res(_db);};
+    req.onerror=()=>rej(req.error);
+  });
+}
+
+function idbGet(key){
+  return openDB().then(db=>new Promise((res,rej)=>{
+    const tx=db.transaction(STORE,'readonly');
+    const req=tx.objectStore(STORE).get(key);
+    req.onsuccess=()=>res(req.result??null);
+    req.onerror=()=>rej(req.error);
+  }));
+}
+
+function idbSet(key,val){
+  return openDB().then(db=>new Promise((res,rej)=>{
+    const tx=db.transaction(STORE,'readwrite');
+    const req=tx.objectStore(STORE).put(val,key);
+    req.onsuccess=()=>res();
+    req.onerror=()=>rej(req.error);
+  }));
+}
+
+function idbGetAll(keys){
+  return openDB().then(db=>new Promise((res,rej)=>{
+    const tx=db.transaction(STORE,'readonly');
+    const store=tx.objectStore(STORE);
+    const result={};let pending=keys.length;
+    if(!pending){res(result);return;}
+    keys.forEach(k=>{
+      const req=store.get(k);
+      req.onsuccess=()=>{result[k]=req.result??null;if(--pending===0)res(result);};
+      req.onerror=()=>{result[k]=null;if(--pending===0)res(result);};
+    });
+  }));
+}
+
+/* Sync fallback helpers (used before IDB ready & for banner key) */
+const KEYS={school:'tkb_school',gv:'tkb_gv',mon:'tkb_mon',nam:'tkb_nam',sang:'tkb_sang',chieu:'tkb_chieu',tietLen:'tkb_tiet_len',breakMin:'tkb_break',sched:'tkb_sched',headerHidden:'tkb_header_hidden'};
+function lsFb(k,d){try{const v=localStorage.getItem(k);return v!==null?v:d}catch(e){return d}}
+function lsSetFb(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+
+/* Save all cfg fields to IDB (and ls mirror for quick sync) */
+async function persistCfg(){
+  const pairs=[
+    [KEYS.school,cfg.school],[KEYS.gv,cfg.gv],[KEYS.mon,cfg.mon],[KEYS.nam,cfg.nam],
+    [KEYS.sang,cfg.sang],[KEYS.chieu,cfg.chieu],
+    [KEYS.tietLen,String(cfg.tietLen)],[KEYS.breakMin,String(cfg.breakMin)],
+    [KEYS.sched,JSON.stringify(cfg.sched)],
+    [KEYS.headerHidden,cfg.headerHidden?'1':'0'],
+  ];
+  for(const[k,v]of pairs){
+    lsSetFb(k,v);          // mirror to ls immediately
+    idbSet(k,v).catch(()=>{}); // persist to IDB async
+  }
+}
+
+/* Load cfg from IDB, fall back to ls if IDB value is null */
+async function loadCfg(){
+  let vals={};
+  try{
+    vals=await idbGetAll(Object.values(KEYS));
+  }catch(e){vals={};}
+  function get(k,def){
+    const v=vals[k];
+    if(v!==null&&v!==undefined)return v;
+    return lsFb(k,def);
+  }
+  cfg.school=get(KEYS.school,DEF.school);
+  cfg.gv=    get(KEYS.gv,    DEF.gv);
+  cfg.mon=   get(KEYS.mon,   DEF.mon);
+  cfg.nam=   get(KEYS.nam,   DEF.nam);
+  cfg.sang=  get(KEYS.sang,  DEF.sang);
+  cfg.chieu= get(KEYS.chieu, DEF.chieu);
+  cfg.tietLen= +( get(KEYS.tietLen,String(DEF.tietLen)) );
+  cfg.breakMin=+( get(KEYS.breakMin,String(DEF.breakMin)) );
+  try{
+    const raw=get(KEYS.sched,null);
+    cfg.sched= raw ? JSON.parse(raw) : DEF.sched;
+  }catch(e){cfg.sched=DEF.sched;}
+  cfg.headerHidden= get(KEYS.headerHidden,'0')==='1';
+}
+
+/* cfg starts with defaults; loadCfg() will overwrite from IDB */
+let cfg={...DEF,sched:JSON.parse(JSON.stringify(DEF.sched))};
+
+/* ════ TIME HELPERS ════ */
+function parseTime(t){const[h,m]=t.split(':').map(Number);return h*60+m;}
+function fmtTime(n){return`${String(Math.floor(n/60)).padStart(2,'0')}:${String(n%60).padStart(2,'0')}`;}
+function computeRanges(){
+  /* Buổi sáng: nghỉ không đều theo thực tế trường
+     T1→T2: 5', T2→T3: 10', T3→T4: 10', T4→T5: 5'
+     Buổi chiều: đều breakMin giữa các tiết */
+  const sm=parseTime(cfg.sang), cm=parseTime(cfg.chieu);
+  const tl=cfg.tietLen, br=cfg.breakMin;
+  const amBreaks=[0,5,10,10,5]; // nghỉ trước tiết 1..5 (tiết 1=0)
+  const pmBreaks=[0,5,10,10,5]; // nghỉ trước tiết 6..10
+  const r={};
+  let cur=sm;
+  for(let t=1;t<=5;t++){
+    if(t>1)cur+=amBreaks[t-1];
+    r[t]=[cur,cur+tl];
+    cur+=tl;
+  }
+  cur=cm;
+  for(let t=6;t<=10;t++){
+    if(t>6)cur+=pmBreaks[t-6];
+    r[t]=[cur,cur+tl];
+    cur+=tl;
+  }
+  return r;
+}
+
+/* ════ CHIP ════ */
+function classColor(l){
+  if(!l||l==='NGHỈ')return'ng';
+  if(l.startsWith('10'))return'k10';
+  if(l.startsWith('11'))return'k11';
+  if(l.startsWith('12'))return'k12';
+  return'k10';
+}
+/* chipShort — dùng cho desktop table (không gian hẹp) */
+function chipShort(l){
+  if(!l||l==='NGHỈ')return`<span class="chip chip-ng">NGHỈ</span>`;
+  if(l==='')return`<span class="chip chip-em">–</span>`;
+  const short=l.split('-')[0];
+  return`<span class="chip chip-${classColor(l)}" title="${l}">${short}</span>`;
+}
+/* chipFull — dùng cho mobile card (hiển thị đầy đủ) */
+function chipFull(l){
+  if(!l||l==='NGHỈ')return`<span class="chip chip-ng">NGHỈ</span>`;
+  if(l==='')return`<span class="chip chip-em">–</span>`;
+  return`<span class="chip chip-${classColor(l)}">${l}</span>`;
+}
+
+/* ════ STATIC INIT (dates etc.) ════ */
+const VN=['Chủ Nhật','Thứ Hai','Thứ Ba','Thứ Tư','Thứ Năm','Thứ Sáu','Thứ Bảy'];
+function weekMon(d){const dow=d.getDay(),diff=dow===0?-6:1-dow,m=new Date(d);m.setDate(d.getDate()+diff);return m;}
+const _now=new Date(),_dow=_now.getDay();
+const todayDow=(_dow>=1&&_dow<=5)?_dow:null;
+const dd=_now.getDate().toString().padStart(2,'0'),mm2=(_now.getMonth()+1).toString().padStart(2,'0');
+const todayStr=todayDow?`${VN[_dow]}, ${dd}/${mm2}`:`${VN[_dow]}`;
+document.getElementById('today-label').textContent=todayStr;
+document.getElementById('mini-label').textContent=todayStr;
+const _mon=weekMon(_now);
+for(let i=0;i<5;i++){const d=new Date(_mon);d.setDate(_mon.getDate()+i);const el=document.getElementById(`d${i+1}`);if(el)el.textContent=d.getDate();}
+if(todayDow){const t=document.querySelector(`.day-tab[data-day="${todayDow}"]`);if(t)t.classList.add('is-today');}
+
+/* ════ RENDER ════ */
+let lastRenderMinute=-1;
+
+function render(force){
+  const now=new Date();
+  const nm=now.getHours()*60+now.getMinutes();
+  // skip if same minute and not forced
+  if(!force && nm===lastRenderMinute) return;
+  lastRenderMinute=nm;
+
+  const ranges=computeRanges();
+  const TM={};
+  for(const[t,r]of Object.entries(ranges))TM[t]=fmtTime(r[0])+'–'+fmtTime(r[1]);
+
+  // find current + next tiết (skip "NGHỈ" for next)
+  let ct=null,nt=null;
+  for(const[t,r]of Object.entries(ranges)){
+    if(nm>=r[0]&&nm<=r[1]){ct=+t;break;}
+  }
+  // find next: first tiết after now, with a real class for today
+  if(todayDow){
+    for(let t=1;t<=10;t++){
+      const r=ranges[t];
+      if(r[0]>nm){
+        // prefer a tiết that has a real class today
+        const lbl=(cfg.sched[t]&&cfg.sched[t][todayDow-1])||'';
+        if(lbl&&lbl!=='NGHỈ'){nt=t;break;}
+        if(nt===null)nt=t; // fallback: first future tiết even if empty
+      }
+    }
+  }
+
+  // update header
+  document.getElementById('disp-school').textContent=cfg.school;
+  document.getElementById('disp-gv').textContent=cfg.gv;
+  document.getElementById('disp-mon').textContent=cfg.mon;
+  document.getElementById('disp-nam').textContent=cfg.nam;
+
+  // ── mobile cards — timeline ──
+  const mRoot=document.getElementById('mobile-root');
+  mRoot.innerHTML='';
+  for(let d=1;d<=5;d++){
+    const v=document.createElement('div');
+    v.className='day-view';v.id=`dv${d}`;
+    let h='';
+    for(const[from,to,sessionLbl] of [[1,5,'☀️ Sáng'],[6,10,'🌙 Chiều']]){
+      h+=`<div class="session-lbl">${sessionLbl}</div><div class="timeline">`;
+      for(let t=from;t<=to;t++){
+        const raw=(cfg.sched[t]&&cfg.sched[t][d-1])||'';
+        const label=raw||null;
+        const isOff=!label||label==='NGHỈ';
+        const isCur=(todayDow===d)&&(ct===t);
+        const isNext=(todayDow===d)&&(!ct)&&(nt===t);
+        // determine past: tiết end time < now, today only
+        const isPast=(todayDow===d)&&ranges[t][1]<nm&&!isCur;
+        let rowCls='tl-row';
+        if(isCur)       rowCls+=' is-current';
+        else if(isNext) rowCls+=' is-next';
+        else if(isPast) rowCls+=' is-past';
+        else if(isOff)  rowCls+=' is-off';
+        const tNum=t<=5?t:t-5;
+        h+=`<div class="${rowCls}">
+          <div class="tl-dot-col"><div class="tl-dot"></div></div>
+          <div class="tl-card">
+            <div class="tl-left">
+              <div class="tl-num">${tNum}</div>
+              <div class="tl-time">${TM[t]}</div>
+            </div>
+            <div class="tl-right">
+              ${(isCur&&!isOff)?`<span class="now-badge"><span class="dot-live"></span>Đang dạy</span>`:''}
+              ${(isNext&&!isOff)?`<span class="next-badge">Tiếp theo</span>`:''}
+              ${isOff?`<span class="nghỉ-lbl">Nghỉ</span>`:chipFull(label)}
+            </div>
+          </div>
+        </div>`;
+      }
+      h+=`</div>`; // close .timeline
+    }
+    v.innerHTML=h;mRoot.appendChild(v);
+  }
+
+  // ── desktop table — ẩn NGHỈ (ô trống) ──
+  let th='';
+  for(let t=1;t<=10;t++){
+    if(t===6)th+=`<tr class="ng-trua"><td colspan="7">☀️ &nbsp;Nghỉ trưa</td></tr>`;
+    const isCR=ct===t;
+    const isNR=(!ct)&&(nt===t);
+    let rowCls='';if(isCR)rowCls=' class="cur-row"';else if(isNR)rowCls=' class="next-row"';
+    th+=`<tr${rowCls}>
+      <td class="td-t">${t<=5?t:t-5}</td><td class="td-tm">${TM[t]}</td>`;
+    for(let di=0;di<5;di++){
+      const isTD=todayDow!==null&&(di+1)===todayDow;
+      const raw=(cfg.sched[t]&&cfg.sched[t][di])||'';
+      const isNghỉ=!raw||raw==='NGHỈ';
+      // Desktop: ẩn NGHỈ, chỉ hiện ô trống
+      th+=`<td${isTD?' class="t-today"':''}>${isNghỉ?'':chipShort(raw)}</td>`;
+    }
+    th+=`</tr>`;
+  }
+  document.getElementById('tbody').innerHTML=th;
+  for(let i=1;i<=5;i++){const el=document.getElementById(`th${i}`);if(el){el.classList.remove('t-today');const b=el.querySelector('.t-badge');if(b)b.remove();}}
+  if(todayDow){const el=document.getElementById(`th${todayDow}`);if(el){el.classList.add('t-today');el.innerHTML+=`<span class="t-badge">Hôm nay</span>`;}}
+
+  // restore active day tab
+  const activeTab=document.querySelector('.day-tab.active');
+  const activeDay=activeTab?+activeTab.dataset.day:(todayDow||1);
+  selectDay(activeDay);
+
+  updateRefreshTime(now);
+}
+
+/* ════ LIVE CLOCK — ticks every second ════ */
+function tickClock(){
+  const n=new Date();
+  const hh=String(n.getHours()).padStart(2,'0');
+  const mm=String(n.getMinutes()).padStart(2,'0');
+  const ss=String(n.getSeconds()).padStart(2,'0');
+  const t=`${hh}:${mm}:${ss}`;
+  const c1=document.getElementById('live-clock');  if(c1)c1.textContent=t;
+  const c2=document.getElementById('mini-clock');  if(c2)c2.textContent=t;
+}
+tickClock();
+setInterval(tickClock,1000);
+
+/* ════ REFRESH ════ */
+function updateRefreshTime(now){
+  const h=String(now.getHours()).padStart(2,'0');
+  const m=String(now.getMinutes()).padStart(2,'0');
+  const txt=`Cập nhật ${h}:${m}`;
+  const el=document.getElementById('refresh-time'); if(el)el.textContent=txt;
+  const el2=document.getElementById('mini-refresh-time'); if(el2)el2.textContent='';
+}
+
+function manualRefresh(){
+  // flash animation on both buttons
+  ['refresh-btn-main','refresh-btn-mini'].forEach(id=>{
+    const btn=document.getElementById(id);
+    if(btn){btn.classList.add('spinning');setTimeout(()=>btn.classList.remove('spinning'),600);}
+  });
+  const dot=document.getElementById('refresh-dot');
+  if(dot){dot.classList.add('spinning');setTimeout(()=>dot.classList.remove('spinning'),600);}
+  lastRenderMinute=-1; // force re-render
+  render(true);
+}
+
+// Auto-refresh every 5s
+setInterval(()=>render(false),5000);
+
+/* ════ HEADER TOGGLE ════ */
+let headerHidden=cfg.headerHidden;
+function applyHeaderState(hidden){
+  headerHidden=hidden;
+  const hdr=document.getElementById('app-header');
+  const minibar=document.getElementById('minibar');
+  const topAct=document.getElementById('top-actions');
+  if(hidden){hdr.classList.replace('expanded','collapsed');minibar.classList.remove('hide');if(topAct)topAct.classList.add('hide');}
+  else{hdr.classList.replace('collapsed','expanded');minibar.classList.add('hide');if(topAct)topAct.classList.remove('hide');}
+}
+function toggleHeader(){
+  applyHeaderState(!headerHidden);
+  cfg.headerHidden=headerHidden;
+  idbSet(KEYS.headerHidden,headerHidden?'1':'0').catch(()=>{});
+  lsSetFb(KEYS.headerHidden,headerHidden?'1':'0');
+}
+
+/* ════ TAB SWITCHING ════ */
+function selectDay(d){
+  document.querySelectorAll('.day-view').forEach(v=>v.classList.remove('visible'));
+  document.querySelectorAll('.day-tab').forEach(t=>t.classList.remove('active'));
+  const v=document.getElementById(`dv${d}`);if(v)v.classList.add('visible');
+  const tab=document.querySelector(`.day-tab[data-day="${d}"]`);
+  if(tab){tab.classList.add('active');tab.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});}
+}
+
+/* ════ SETTINGS DRAWER ════ */
+let schedEditDay=0;
+
+function openSettings(){
+  document.getElementById('cfg-school').value=cfg.school;
+  document.getElementById('cfg-gv').value=cfg.gv;
+  document.getElementById('cfg-mon').value=cfg.mon;
+  document.getElementById('cfg-nam').value=cfg.nam;
+  document.getElementById('cfg-sang').value=cfg.sang;
+  document.getElementById('cfg-chieu').value=cfg.chieu;
+  document.getElementById('cfg-tiet-len').value=cfg.tietLen;
+  document.getElementById('cfg-break').value=cfg.breakMin;
+  schedEditDay=0;renderSchedDayBtns();renderSchedGrid();
+  document.getElementById('settings-overlay').classList.add('open');
+  document.getElementById('settings-drawer').classList.add('open');
+  document.body.style.overflow='hidden';
+  document.body.style.touchAction='none';
+}
+function closeSettings(){
+  document.getElementById('settings-overlay').classList.remove('open');
+  document.getElementById('settings-drawer').classList.remove('open');
+  document.body.style.overflow='';
+  document.body.style.touchAction='';
+}
+
+/* Block swipe-down-to-dismiss on drawer — allow scroll inside */
+const drawer=document.getElementById('settings-drawer');
+let touchStartY=0,drawerScrollTop=0;
+drawer.addEventListener('touchstart',e=>{
+  touchStartY=e.touches[0].clientY;
+  drawerScrollTop=drawer.scrollTop;
+},{passive:true});
+drawer.addEventListener('touchmove',e=>{
+  const dy=e.touches[0].clientY-touchStartY;
+  // if swiping down AND at top of scroll → block
+  if(dy>0&&drawerScrollTop<=0){
+    e.preventDefault();
+    e.stopPropagation();
+  }
+},{passive:false});
+
+function switchSchedDay(di){schedEditDay=di;renderSchedDayBtns();renderSchedGrid();}
+function renderSchedDayBtns(){document.querySelectorAll('.sched-day-btn').forEach(b=>b.classList.toggle('active-day',+b.dataset.d===schedEditDay));}
+function renderSchedGrid(){
+  const grid=document.getElementById('sched-grid');
+  let h='';
+  for(let t=1;t<=10;t++){
+    const val=(cfg.sched[t]&&cfg.sched[t][schedEditDay])||'';
+    h+=`<div class="sched-cell"><div class="sched-cell-num">${t}</div><input class="sched-cell-input" id="sc-${t}" value="${val}" placeholder="Trống" maxlength="10"></div>`;
+  }
+  grid.innerHTML=h;
+}
+
+function saveAll(){
+  cfg.school=document.getElementById('cfg-school').value.trim()||DEF.school;
+  cfg.gv=document.getElementById('cfg-gv').value.trim()||DEF.gv;
+  cfg.mon=document.getElementById('cfg-mon').value.trim()||DEF.mon;
+  cfg.nam=document.getElementById('cfg-nam').value.trim()||DEF.nam;
+  cfg.sang=document.getElementById('cfg-sang').value||DEF.sang;
+  cfg.chieu=document.getElementById('cfg-chieu').value||DEF.chieu;
+  cfg.tietLen=Math.max(30,Math.min(90,+document.getElementById('cfg-tiet-len').value||45));
+  cfg.breakMin=Math.max(0,Math.min(30,+document.getElementById('cfg-break').value||5));
+  for(let t=1;t<=10;t++){
+    const el=document.getElementById(`sc-${t}`);
+    if(!cfg.sched[t])cfg.sched[t]=Array(5).fill('');
+    cfg.sched[t][schedEditDay]=(el?el.value.trim().toUpperCase():'');
+  }
+  persistCfg();
+  lastRenderMinute=-1;render(true);
+  closeSettings();
+  const t=document.getElementById('saved-toast');
+  t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000);
+}
+
+/* ════ BOOT — load từ IDB trước khi render ════ */
+(async()=>{
+  await loadCfg();
+  applyHeaderState(cfg.headerHidden);
+  render(true);
+})();
+</script>
+<!-- ══ IOS INSTALL BANNER ══ -->
+<div id="ios-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:800;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:#1E293B;border-top:1px solid rgba(255,255,255,.1);box-shadow:0 -4px 20px rgba(0,0,0,.3)">
+  <div style="display:flex;align-items:flex-start;gap:12px">
+    <div style="width:44px;height:44px;border-radius:10px;background:#2563EB;flex-shrink:0;display:flex;align-items:center;justify-content:center">
+      <svg width="24" height="24" viewBox="0 0 192 192" fill="none"><rect x="10" y="38" width="172" height="136" rx="14" fill="#3B82F6"/><rect x="10" y="18" width="172" height="46" rx="12" fill="#1D4ED8"/><rect x="26" y="66" width="34" height="24" rx="6" fill="#DBEAFE"/><rect x="79" y="66" width="34" height="24" rx="6" fill="#FEE2E2"/><rect x="132" y="66" width="34" height="24" rx="6" fill="#FEF3C7"/><rect x="26" y="100" width="34" height="24" rx="6" fill="#FEF3C7"/><rect x="79" y="100" width="34" height="24" rx="6" fill="#DBEAFE"/><rect x="132" y="100" width="34" height="24" rx="6" fill="#FEE2E2"/></svg>
+    </div>
+    <div style="flex:1;min-width:0">
+      <div style="font-size:13px;font-weight:800;color:#F8FAFC;margin-bottom:2px">Thêm vào màn hình chính</div>
+      <div style="font-size:11px;color:#94A3B8;line-height:1.4">Nhấn <span style="display:inline-flex;align-items:center;gap:2px;color:#60A5FA;font-weight:700">
+        <svg width="11" height="11" viewBox="0 0 20 20" fill="none"><path d="M10 2v11M6 6l4-4 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><rect x="3" y="10" width="14" height="9" rx="2" stroke="currentColor" stroke-width="1.6"/></svg>
+        Chia sẻ</span> → <strong style="color:#F1F5F9">"Thêm vào màn hình chính"</strong> để dùng như app</div>
+    </div>
+    <button onclick="dismissBanner()" style="background:rgba(255,255,255,.1);border:none;border-radius:6px;color:#94A3B8;width:26px;height:26px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0">×</button>
+  </div>
+</div>
+
+<script>
+/* ════ IOS INSTALL BANNER ════ */
+(function(){
+  const isIos=(/iphone|ipad|ipod/i).test(navigator.userAgent);
+  const isInApp=window.navigator.standalone===true;
+  // Check IDB first, fallback to ls
+  idbGet('tkb_banner_dismissed').then(v=>{
+    const dismissed=v||lsFb('tkb_banner_dismissed',null);
+    if(isIos&&!isInApp&&!dismissed){
+      const b=document.getElementById('ios-banner');
+      if(b)b.style.display='block';
+    }
+  }).catch(()=>{
+    const dismissed=lsFb('tkb_banner_dismissed',null);
+    if(isIos&&!isInApp&&!dismissed){
+      const b=document.getElementById('ios-banner');
+      if(b)b.style.display='block';
+    }
+  });
+})();
+function dismissBanner(){
+  const b=document.getElementById('ios-banner');
+  if(b)b.style.display='none';
+  idbSet('tkb_banner_dismissed','1').catch(()=>{});
+  lsSetFb('tkb_banner_dismissed','1');
+}
+</script>
+<script>
+/* ════ SERVICE WORKER REGISTRATION ════ */
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('/sw.js')
+      .then(r=>console.log('SW registered:', r.scope))
+      .catch(e=>console.log('SW error:', e));
+  });
+}
+</script>
+</body>
+</html>
