@@ -2,7 +2,7 @@
    TKB Service Worker — Cache-first strategy
    Tăng version CACHE_NAME mỗi khi deploy mới
    ═══════════════════════════════════════════ */
-const CACHE_NAME = 'tkb-v2';
+const CACHE_NAME = 'tkb-v3';
 
 /* ── Install: pre-cache core files dùng relative URL ── */
 self.addEventListener('install', event => {
@@ -13,6 +13,7 @@ self.addEventListener('install', event => {
         cache.add('./'),
         cache.add('./index.html'),
         cache.add('./manifest.json'),
+        cache.add('./config.js'),
         cache.add('./icon-192.png'),
         cache.add('./icon-512.png'),
       ]);
