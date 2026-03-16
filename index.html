@@ -205,6 +205,18 @@ tr.cur-row td.t-today .chip{animation:pulse 1.5s ease-in-out infinite}
 .io-btn:hover{background:#F1F5F9;color:var(--txt);border-color:#CBD5E1}
 .io-btn-import{border-color:#BBF7D0;color:#166534;background:#F0FDF4}
 .io-btn-import:hover{background:#DCFCE7}
+/* Toggle switch */
+.toggle-switch{position:relative;display:inline-flex;cursor:pointer}
+.toggle-switch input{opacity:0;width:0;height:0;position:absolute}
+.toggle-track{width:44px;height:26px;background:#CBD5E1;border-radius:13px;transition:background .2s;position:relative;flex-shrink:0}
+.toggle-track::after{content:'';position:absolute;width:20px;height:20px;border-radius:50%;background:#fff;top:3px;left:3px;transition:transform .2s;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.toggle-switch input:checked+.toggle-track{background:var(--blue)}
+.toggle-switch input:checked+.toggle-track::after{transform:translateX(18px)}
+/* Notif presets */
+.notif-preset{padding:5px 11px;border-radius:7px;border:1.5px solid var(--bdr);background:#F8FAFC;font-family:inherit;font-size:11px;font-weight:700;color:var(--mut);cursor:pointer;transition:all .15s}
+.notif-preset:hover{border-color:var(--blue);color:var(--blue)}
+.notif-preset.active{background:var(--blue);border-color:var(--blue);color:#fff}
+.notif-custom-btn{background:#F0FDF4;border-color:#BBF7D0;color:#166534}
 
 /* ══ TOAST ══ */
 .saved-toast{display:none;position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#0F172A;color:#fff;font-size:12px;font-weight:700;padding:8px 18px;border-radius:20px;z-index:700;white-space:nowrap;pointer-events:none}
@@ -354,7 +366,38 @@ tr.cur-row td.t-today .chip{animation:pulse 1.5s ease-in-out infinite}
     </div>
 
     <div class="s-section">
-      <div class="s-title">🖼 Icon ứng dụng</div>
+      <div class="s-title">🔔 Thông báo nhắc tiết học</div>
+      <!-- Toggle bật/tắt -->
+      <div class="s-row" style="justify-content:space-between">
+        <span style="font-size:13px;font-weight:700;color:var(--txt)">Bật thông báo</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="cfg-notif-enabled" onchange="handleNotifToggle(this.checked)">
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+      <!-- Status quyền -->
+      <div id="notif-perm-status" style="font-size:11px;color:var(--mut);margin:4px 0 10px;padding:7px 10px;background:#F8FAFC;border-radius:8px;border:1px solid var(--bdr)">
+        Đang kiểm tra quyền...
+      </div>
+      <!-- Thời gian nhắc trước -->
+      <div class="s-row">
+        <span class="s-label" style="width:100px">Nhắc trước</span>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="notif-preset" data-min="5"  onclick="setNotifMinutes(5)">5 phút</button>
+          <button class="notif-preset" data-min="10" onclick="setNotifMinutes(10)">10 phút</button>
+          <button class="notif-preset" data-min="15" onclick="setNotifMinutes(15)">15 phút</button>
+          <button class="notif-preset notif-custom-btn" onclick="focusNotifCustom()">Tùy chỉnh</button>
+        </div>
+      </div>
+      <div class="s-row" id="notif-custom-row" style="display:none">
+        <span class="s-label" style="width:100px">Số phút</span>
+        <input class="s-input" id="cfg-notif-minutes" type="number" min="1" max="60" value="5" style="width:70px;flex:none" oninput="onNotifMinutesInput(this.value)">
+        <span style="font-size:12px;color:var(--mut)">phút trước tiết</span>
+      </div>
+      <div style="font-size:10px;color:var(--mut);line-height:1.5;margin-top:4px">
+        Nhắc khi app đang mở. iOS cần thêm vào màn hình chính để nhận thông báo khi tắt màn hình.
+      </div>
+    </div>
       <div style="display:flex;align-items:center;gap:12px">
         <div id="icon-preview" style="width:56px;height:56px;border-radius:12px;background:#1E293B;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;border:2px solid var(--bdr)">
           <svg width="32" height="32" viewBox="0 0 192 192" fill="none"><rect x="10" y="38" width="172" height="136" rx="14" fill="#2563EB"/><rect x="10" y="18" width="172" height="46" rx="12" fill="#1D4ED8"/><rect x="26" y="66" width="34" height="24" rx="6" fill="#DBEAFE"/><rect x="79" y="66" width="34" height="24" rx="6" fill="#FEE2E2"/><rect x="132" y="66" width="34" height="24" rx="6" fill="#FEF3C7"/></svg>
@@ -480,7 +523,7 @@ function idbGetAll(keys){
 }
 
 /* Sync fallback helpers (used before IDB ready & for banner key) */
-const KEYS={school:'tkb_school',gv:'tkb_gv',mon:'tkb_mon',nam:'tkb_nam',sang:'tkb_sang',chieu:'tkb_chieu',tietLen:'tkb_tiet_len',breakMin:'tkb_break',amBreaks:'tkb_am_breaks',pmBreaks:'tkb_pm_breaks',iconDataUrl:'tkb_icon',sched:'tkb_sched',headerHidden:'tkb_header_hidden'};
+const KEYS={school:'tkb_school',gv:'tkb_gv',mon:'tkb_mon',nam:'tkb_nam',sang:'tkb_sang',chieu:'tkb_chieu',tietLen:'tkb_tiet_len',breakMin:'tkb_break',amBreaks:'tkb_am_breaks',pmBreaks:'tkb_pm_breaks',iconDataUrl:'tkb_icon',notifEnabled:'tkb_notif_enabled',notifMinutes:'tkb_notif_min',sched:'tkb_sched',headerHidden:'tkb_header_hidden'};
 function lsFb(k,d){try{const v=localStorage.getItem(k);return v!==null?v:d}catch(e){return d}}
 function lsSetFb(k,v){try{localStorage.setItem(k,v)}catch(e){}}
 
@@ -493,6 +536,8 @@ async function persistCfg(){
     [KEYS.amBreaks,JSON.stringify(cfg.amBreaks)],
     [KEYS.pmBreaks,JSON.stringify(cfg.pmBreaks)],
     [KEYS.iconDataUrl,cfg.iconDataUrl||''],
+    [KEYS.notifEnabled,cfg.notifEnabled?'1':'0'],
+    [KEYS.notifMinutes,String(cfg.notifMinutes||5)],
     [KEYS.sched,JSON.stringify(cfg.sched)],
     [KEYS.headerHidden,cfg.headerHidden?'1':'0'],
   ];
@@ -524,6 +569,8 @@ async function loadCfg(){
   try{ cfg.amBreaks=JSON.parse(get(KEYS.amBreaks,null))||DEF.amBreaks||[5,10,10,5]; }catch(e){cfg.amBreaks=[5,10,10,5];}
   try{ cfg.pmBreaks=JSON.parse(get(KEYS.pmBreaks,null))||DEF.pmBreaks||[5,10,10,5]; }catch(e){cfg.pmBreaks=[5,10,10,5];}
   cfg.iconDataUrl=get(KEYS.iconDataUrl,'')||'';
+  cfg.notifEnabled=get(KEYS.notifEnabled,'0')==='1';
+  cfg.notifMinutes=+(get(KEYS.notifMinutes,'5')||5);
   try{
     const raw=get(KEYS.sched,null);
     cfg.sched= raw ? JSON.parse(raw) : DEF.sched;
@@ -532,7 +579,7 @@ async function loadCfg(){
 }
 
 /* cfg starts with defaults; loadCfg() will overwrite from IDB */
-let cfg={...DEF,sched:JSON.parse(JSON.stringify(DEF.sched)),amBreaks:(DEF.amBreaks||[5,10,10,5]).slice(),pmBreaks:(DEF.pmBreaks||[5,10,10,5]).slice(),iconDataUrl:''};
+let cfg={...DEF,sched:JSON.parse(JSON.stringify(DEF.sched)),amBreaks:(DEF.amBreaks||[5,10,10,5]).slice(),pmBreaks:(DEF.pmBreaks||[5,10,10,5]).slice(),iconDataUrl:'',notifEnabled:false,notifMinutes:5};
 
 /* ════ TIME HELPERS ════ */
 function parseTime(t){const[h,m]=t.split(':').map(Number);return h*60+m;}
@@ -699,6 +746,8 @@ function render(force){
   selectDay(activeDay);
 
   updateRefreshTime(now);
+  // Re-schedule notifications sau mỗi render (schedule có thể thay đổi)
+  if(cfg.notifEnabled) scheduleNotifs();
 }
 
 /* ════ LIVE CLOCK — ticks every second ════ */
@@ -780,6 +829,8 @@ function openSettings(){
   renderBreakGrid('break-grid-pm', cfg.pmBreaks||[5,10,10,5], 'pm');
   // Icon preview
   updateIconPreview(cfg.iconDataUrl);
+  // Notification settings
+  openNotifSettingsInDrawer();
   schedEditDay=0;renderSchedDayBtns();renderSchedGrid();
   document.getElementById('settings-overlay').classList.add('open');
   document.getElementById('settings-drawer').classList.add('open');
@@ -908,6 +959,172 @@ function applyIconToDOM(dataUrl){
   if(ico) ico.href=dataUrl||'icon-192.png';
 }
 
+/* ════ NOTIFICATION ENGINE ════ */
+let _notifTimers=[];          // active setTimeout handles
+let _lastNotifScheduled='';   // track what was scheduled to avoid re-schedule
+
+function notifPermStatus(){
+  if(!('Notification' in window)) return 'unsupported';
+  return Notification.permission; // 'default'|'granted'|'denied'
+}
+
+function updateNotifPermUI(){
+  const status=notifPermStatus();
+  const el=document.getElementById('notif-perm-status');
+  if(!el) return;
+  const map={
+    unsupported:{txt:'⚠️ Trình duyệt không hỗ trợ thông báo',bg:'#FFF7ED',color:'#92400E'},
+    default:    {txt:'⏳ Chưa cấp quyền — bật thông báo để được hỏi quyền',bg:'#FFF7ED',color:'#92400E'},
+    granted:    {txt:'✅ Đã cấp quyền thông báo',bg:'#F0FDF4',color:'#166534'},
+    denied:     {txt:'❌ Đã từ chối quyền — vào Cài đặt iPhone/điện thoại để bật lại',bg:'#FEF2F2',color:'#991B1B'},
+  };
+  const info=map[status]||map.default;
+  el.textContent=info.txt;
+  el.style.background=info.bg;
+  el.style.color=info.color;
+  el.style.borderColor=status==='granted'?'#BBF7D0':status==='denied'?'#FECACA':'#FED7AA';
+}
+
+async function requestNotifPermission(){
+  if(!('Notification' in window)) return false;
+  if(Notification.permission==='granted') return true;
+  if(Notification.permission==='denied') return false;
+  const result=await Notification.requestPermission();
+  updateNotifPermUI();
+  return result==='granted';
+}
+
+async function handleNotifToggle(checked){
+  if(checked){
+    const granted=await requestNotifPermission();
+    if(!granted){
+      // revert toggle
+      const el=document.getElementById('cfg-notif-enabled');
+      if(el) el.checked=false;
+      showToast('❌ Cần cấp quyền thông báo trong Cài đặt');
+      return;
+    }
+    cfg.notifEnabled=true;
+  } else {
+    cfg.notifEnabled=false;
+    clearNotifTimers();
+  }
+  lsSetFb(KEYS.notifEnabled,cfg.notifEnabled?'1':'0');
+  idbSet(KEYS.notifEnabled,cfg.notifEnabled?'1':'0').catch(()=>{});
+  if(cfg.notifEnabled) scheduleNotifs();
+  showToast(cfg.notifEnabled?'🔔 Đã bật thông báo':'🔕 Đã tắt thông báo');
+}
+
+function setNotifMinutes(min){
+  cfg.notifMinutes=min;
+  document.getElementById('cfg-notif-minutes').value=min;
+  document.getElementById('notif-custom-row').style.display='none';
+  updateNotifPresetBtns(min);
+  lsSetFb(KEYS.notifMinutes,String(min));
+  idbSet(KEYS.notifMinutes,String(min)).catch(()=>{});
+  if(cfg.notifEnabled){ clearNotifTimers(); scheduleNotifs(); }
+}
+
+function focusNotifCustom(){
+  document.getElementById('notif-custom-row').style.display='flex';
+  document.getElementById('cfg-notif-minutes').focus();
+  updateNotifPresetBtns(-1);
+}
+
+function onNotifMinutesInput(val){
+  const min=Math.max(1,Math.min(60,+val||5));
+  cfg.notifMinutes=min;
+  updateNotifPresetBtns(-1);
+  lsSetFb(KEYS.notifMinutes,String(min));
+  idbSet(KEYS.notifMinutes,String(min)).catch(()=>{});
+  if(cfg.notifEnabled){ clearNotifTimers(); scheduleNotifs(); }
+}
+
+function updateNotifPresetBtns(active){
+  document.querySelectorAll('.notif-preset').forEach(b=>{
+    b.classList.toggle('active',+b.dataset.min===active);
+  });
+}
+
+function openNotifSettingsInDrawer(){
+  // Populate UI from cfg when drawer opens
+  const en=document.getElementById('cfg-notif-enabled');
+  if(en) en.checked=!!cfg.notifEnabled;
+  const minEl=document.getElementById('cfg-notif-minutes');
+  if(minEl) minEl.value=cfg.notifMinutes||5;
+  const presets=[5,10,15];
+  if(presets.includes(cfg.notifMinutes)){
+    document.getElementById('notif-custom-row').style.display='none';
+    updateNotifPresetBtns(cfg.notifMinutes);
+  } else {
+    document.getElementById('notif-custom-row').style.display='flex';
+    updateNotifPresetBtns(-1);
+  }
+  updateNotifPermUI();
+}
+
+function clearNotifTimers(){
+  _notifTimers.forEach(t=>clearTimeout(t));
+  _notifTimers=[];
+}
+
+function scheduleNotifs(){
+  clearNotifTimers();
+  if(!cfg.notifEnabled) return;
+  if(notifPermStatus()!=='granted') return;
+  if(!todayDow) return; // weekend
+
+  const ranges=computeRanges();
+  const now=new Date();
+  const nm=now.getHours()*60+now.getMinutes();
+  const ahead=cfg.notifMinutes||5;
+  const schedKey=`${now.toDateString()}-${ahead}`;
+  // Don't reschedule same day+config twice (avoids double-fire on re-render)
+  // But still allow if forced
+  const scheduled=[];
+
+  for(let t=1;t<=10;t++){
+    const label=(cfg.sched[t]&&cfg.sched[t][todayDow-1])||'';
+    if(!label||label==='NGHỈ') continue;
+
+    const startMin=ranges[t][0];
+    const fireMin=startMin-ahead;
+    if(fireMin<=nm) continue; // already past
+
+    const msUntil=(fireMin-nm)*60*1000;
+    const short=label.split('-')[0];
+    const id=setTimeout(()=>{
+      fireNotif(t, short, label, fmtTime(ranges[t][0]), fmtTime(ranges[t][1]));
+    }, msUntil);
+    _notifTimers.push(id);
+    scheduled.push(`T${t<=5?t:t-5} ${short} in ${msUntil/60000|0}m`);
+  }
+  console.log('[TKB Notif] Scheduled:', scheduled);
+}
+
+function fireNotif(tiet, short, full, startTime, endTime){
+  if(notifPermStatus()!=='granted') return;
+  const buoi=tiet<=5?'Sáng':'Chiều';
+  const tNum=tiet<=5?tiet:tiet-5;
+  try{
+    const n=new Notification(`📚 Tiết ${tNum} ${buoi} — ${short}`,{
+      body:`${full}\n${startTime} – ${endTime}\nChuẩn bị vào lớp!`,
+      icon: cfg.iconDataUrl||'icon-192.png',
+      badge:'icon-192.png',
+      tag:`tkb-t${tiet}`,
+      requireInteraction:false,
+      silent:false,
+    });
+    n.onclick=()=>{ window.focus(); n.close(); };
+    setTimeout(()=>n.close(), 12000); // auto-close sau 12s
+  }catch(e){ console.warn('Notif error:',e); }
+}
+
+// Re-schedule mỗi phút (đầu ngày mới hoặc sau reload)
+setInterval(()=>{
+  if(cfg.notifEnabled) scheduleNotifs();
+}, 60000);
+
 /* ════ EXPORT / IMPORT CONFIG ════ */
 function exportConfig(){
   const data={
@@ -983,6 +1200,10 @@ function showToast(msg){
   applyHeaderState(cfg.headerHidden);
   if(cfg.iconDataUrl) applyIconToDOM(cfg.iconDataUrl);
   render(true);
+  // Khởi động notification scheduler sau khi render xong
+  if(cfg.notifEnabled && notifPermStatus()==='granted'){
+    scheduleNotifs();
+  }
 })();
 </script>
 <!-- ══ IOS INSTALL BANNER ══ -->
